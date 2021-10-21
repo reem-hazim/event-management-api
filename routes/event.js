@@ -5,48 +5,48 @@ const router = express.Router({mergeParams: true})
 const {verifyToken, isCreator, validateNewEvent, validateUpdateEvent} = require('../middleware')
 const wrapAsync = require('../utils/wrapAsync')
 const User = require('../models/user')
+const AppError = require('../utils/AppError')
 
 router.post('/:id/register', verifyToken, async (req, res)=>{
 	const {id:event_id} = req.params;
 	const event = await Event.findById(event_id)
 	const user = await User.findById(req.user.user_id)
 	if (!event)
-		return res.send("This is not a valid event ID.")
+		throw new AppError("This is not a valid event ID.", 400, "Invalid Event ID")
 	if(!user)
-		return res.send("Invalid user.")
+		throw new AppError("This is not a valid User ID.", 400, "Invalid User ID")
 
 	// check if user is already registered
-	if (user.isRegistered(event._id)){
-		return res.send("You are already registered in this event")
-	}
+	if (user.isRegistered(event._id))
+		throw new AppError("You are already registered in this event.", 400, "Already registered.")
+	
 	event.registeredUsers.push(user._id)
 	await event.save()
 	user.registeredEvents.push(event._id)
 	await user.save()
-	return res.send(`You have been registered to event ${event_id}`)
+	return res.json(await user.populateUser())
 })
 
 router.post('/:id/unregister', verifyToken, wrapAsync(async (req, res)=>{
 	const {id:event_id} = req.params;
 	const {user_id} = req.user
 	const user = await User.findById(user_id)
-	if (!user.isRegistered(event_id)){
-		return res.send("You are not registered in this event")
-	}
-	await User.findByIdAndUpdate(user_id, { $pull: {registeredEvents: event_id }}, {new:true, useFindAndModify: false})
+	if (!user.isRegistered(event_id))
+		throw new AppError("You are not registered in this event.", 400, "Not registered.")
+	
+	const updatedUser = await User.findByIdAndUpdate(user_id, { $pull: {registeredEvents: event_id }}, {new:true, useFindAndModify: false})
 	await Event.findByIdAndUpdate(event_id, { $pull: {registeredUsers: user_id }}, {new:true, useFindAndModify: false})
-	return res.send(`You have been unregistered from event ${event_id}`)
+	return res.json(await updatedUser.prettyPrint())
 }))
 
 router.route('/:id')
 	.get(wrapAsync(async (req, res)=> {
 		const event = await Event.findById(req.params.id)
-		res.json(event)
+		res.json(await event.populateEvent())
 	}))
 	.delete(verifyToken, isCreator, wrapAsync(async (req, res)=>{
-		await Event.findByIdAndDelete(req.params.id);
-		// todo: maybe return list of all events again?
-		res.send(`Deleted Event ${req.params.id}`)
+		const deletedEvent = await Event.findByIdAndDelete(req.params.id);
+		res.json(deletedEvent)
 	}))
 	.put(verifyToken, isCreator, validateUpdateEvent, wrapAsync(async (req, res)=>{
 		const event = await Event.findByIdAndUpdate(req.params.id, {...req.body}, {new:true});
@@ -56,7 +56,10 @@ router.route('/:id')
 router.route('/')
 	// show all events
 	.get(wrapAsync(async (req, res)=>{
-		const events = await Event.find()
+		const events = await Event
+								.find()
+								.populate({path: 'creator', select: ['firstName', 'lastName', 'email']})
+								.populate({path: 'registeredUsers', select: ['firstName', 'lastName', 'email']})
 		res.json(events)
 	}))
 	// create new event
@@ -65,7 +68,7 @@ router.route('/')
 		const event = new Event({name, startDate, endDate, location})
 		event.creator = req.user.user_id
 		await event.save()
-		return res.json(event)
+		return res.json(await event.populateEvent())
 	}))
 
 module.exports = router

@@ -9,6 +9,7 @@ module.exports.userSchema = Joi.object({
 		.regex(/[A-Z]/, 'upper-case')
 		.regex(/[a-z]/, 'lower-case')
 		.regex(/[^\w]/, 'special character').required()
+
 })
 
 module.exports.eventUpdateSchema = Joi.object({

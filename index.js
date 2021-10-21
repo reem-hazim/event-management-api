@@ -4,7 +4,6 @@ if(process.env.NODE_ENV !== "production"){
 const express = require("express");
 const path = require('path');
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
 
 //Require models
 const User = require('./models/user');
@@ -42,9 +41,10 @@ app.use('*', (req, res, next)=>{
 
 // Error handler
 app.use((err, req, res, next)=>{
-	const {status = 500, message = "Something went wrong"} = err;
-	res.status(status)
-	res.send(message);
+	const {status = 500, message = "Something went wrong", name="Error"} = err;
+	res.status(status).json({
+		"name": name,
+		"message": message});
 })
 
 const port = process.env.PORT || 3000;

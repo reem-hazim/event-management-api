@@ -20,6 +20,7 @@ const userSchema = new Schema({
 	email: {
 		type: String,
 		required: true,
+		unique: [true, "An account with this email is already registered. Please log in."]
 	},
 	dob: {
 		type: Date,
@@ -35,7 +36,7 @@ const userSchema = new Schema({
 	},
 	registeredEvents: [{
 		type: Schema.Types.ObjectId,
-		ref: 'Event'
+		ref: 'Event',
 	}]
 })
 
@@ -55,7 +56,7 @@ userSchema.pre('save', async function(next){
 	next();
 })
 
-userSchema.methods.createToken = async function(token_key){
+userSchema.methods.createToken = function(token_key){
 	const token = jwt.sign(
         { user_id: this._id, email:this.email },
         token_key,
@@ -63,13 +64,18 @@ userSchema.methods.createToken = async function(token_key){
       );
       // save user token
       this.token = token;
-      await this.save()
 }
 
 userSchema.methods.isRegistered = function(event_id){
 	return registered = this.registeredEvents.some(function (event) {
     	return event.equals(event_id);
 	});
+}
+
+userSchema.methods.prettyPrint = async function(){
+	await this.populate({path: 'registeredEvents', select: 'name'})
+	const {email, firstName, lastName, dob, token, registeredEvents} = this
+	return {email, firstName, lastName, dob, token, registeredEvents, image: this.image.url}
 }
 
 module.exports = mongoose.model('User', userSchema);

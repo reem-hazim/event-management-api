@@ -25,8 +25,12 @@ const eventSchema = new Schema({
 	},
 	registeredUsers: [{
 		type: Schema.Types.ObjectId,
-		ref: 'User'
+		ref: 'User',
 	}]
 })
 
+eventSchema.methods.populateEvent = async function(){
+	return await this.populate({path: 'creator', select: ['firstName', 'lastName', 'email']})
+					.populate({path: 'registeredUsers', select: ['firstName', 'lastName', 'email']})
+}
 module.exports = mongoose.model('Event', eventSchema);
