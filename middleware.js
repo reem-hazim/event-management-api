@@ -3,6 +3,7 @@ const AppError = require('./utils/AppError')
 const Event = require('./models/event')
 const User = require('./models/user')
 const wrapAsync = require('./utils/wrapAsync')
+const {userSchema, eventUpdateSchema, eventNewSchema} = require('./schemas')
 
 module.exports.verifyToken = wrapAsync(async (req, res, next) => {
   const token =
@@ -36,4 +37,31 @@ module.exports.isCreator = async (req, res, next)=>{
 		return res.send("You are not authorized to edit this event.")
 	}
 	return next()
+}
+
+module.exports.validateNewEvent = (req, res, next)=>{
+	const {error} = eventNewSchema.validate(req.body)
+	if (error){
+		const msg = error.details.map(el => el.message).join(', ')
+		throw new AppError(msg, 400)
+	} else
+		next()
+}
+
+module.exports.validateUpdateEvent = (req, res, next)=>{
+	const {error} = eventUpdateSchema.validate(req.body)
+	if (error){
+		const msg = error.details.map(el => el.message).join(', ')
+		throw new AppError(msg, 400)
+	} else
+		next()
+}
+
+module.exports.validateNewUser = (req, res, next)=>{
+	const {error} = userSchema.validate(req.body)
+	if (error){
+		const msg = error.details.map(el => el.message).join(', ')
+		throw new AppError(msg, 400)
+	} else
+		next()
 }

@@ -5,7 +5,6 @@ const express = require("express");
 const path = require('path');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
-const session = require('express-session')
 
 //Require models
 const User = require('./models/user');

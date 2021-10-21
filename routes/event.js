@@ -2,7 +2,7 @@ const express = require('express')
 const mongoose = require('mongoose')
 const Event = require('../models/event')
 const router = express.Router({mergeParams: true})
-const {verifyToken, isCreator} = require('../middleware')
+const {verifyToken, isCreator, validateNewEvent, validateUpdateEvent} = require('../middleware')
 const wrapAsync = require('../utils/wrapAsync')
 const User = require('../models/user')
 
@@ -48,7 +48,7 @@ router.route('/:id')
 		// todo: maybe return list of all events again?
 		res.send(`Deleted Event ${req.params.id}`)
 	}))
-	.put(verifyToken, isCreator, wrapAsync(async (req, res)=>{
+	.put(verifyToken, isCreator, validateUpdateEvent, wrapAsync(async (req, res)=>{
 		const event = await Event.findByIdAndUpdate(req.params.id, {...req.body}, {new:true});
 		res.json(event)
 	}))
@@ -60,11 +60,12 @@ router.route('/')
 		res.json(events)
 	}))
 	// create new event
-	.post(verifyToken, wrapAsync(async (req, res)=>{
-		const event = new Event(req.body)
+	.post(verifyToken, validateNewEvent, wrapAsync(async (req, res)=>{
+		const {name, startDate, endDate, location} = req.body
+		const event = new Event({name, startDate, endDate, location})
 		event.creator = req.user.user_id
-		event.save()
-		res.json(event)
+		await event.save()
+		return res.json(event)
 	}))
 
 module.exports = router
