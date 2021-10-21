@@ -1,22 +1,31 @@
 const jwt = require('jsonwebtoken')
 const AppError = require('./utils/AppError')
 const Event = require('./models/event')
+const User = require('./models/user')
+const wrapAsync = require('./utils/wrapAsync')
 
-module.exports.verifyToken = (req, res, next) => {
+module.exports.verifyToken = wrapAsync(async (req, res, next) => {
   const token =
     req.headers["x-access-token"];
 
   if (!token) {
     return res.status(400).send("A token is required for authentication");
   }
+
   try{
-	const decoded = jwt.verify(token, process.env.TOKEN_KEY);
-	req.user = decoded;
+		const decoded = jwt.verify(token, process.env.TOKEN_KEY);
+		req.user = decoded;
   } catch(error){
   	throw new AppError(error, 400)
   }
-	return next();
-};
+
+  const user = await User.findById(req.user.user_id)
+
+  if (user.token === token)
+		return next();
+	else
+		return res.send("Your token is expired. Please login again.")
+});
 
 module.exports.isCreator = async (req, res, next)=>{
 	const user_id = req.user.user_id

@@ -34,12 +34,10 @@ const app = express();
 
 app.use(express.urlencoded({extended: true}))
 
-const secret = process.env.SECRET || 'thishshouldbeabettersecret';
-
 app.use("/events", eventRoutes)
 app.use("/", userRoutes)
 
-app.all('*', (req, res, next)=>{
+app.use('*', (req, res, next)=>{
 	next(new AppError('Page Not Found', 404))
 })
 

@@ -32,7 +32,11 @@ const userSchema = new Schema({
 	password: {
 		type: String,
 		required: true
-	}
+	},
+	registeredEvents: [{
+		type: Schema.Types.ObjectId,
+		ref: 'Event'
+	}]
 })
 
 // Validate user
@@ -55,13 +59,17 @@ userSchema.methods.createToken = async function(token_key){
 	const token = jwt.sign(
         { user_id: this._id, email:this.email },
         token_key,
-        {
-          expiresIn: "2h",
-        }
+        {expiresIn: "2h",}
       );
       // save user token
       this.token = token;
       await this.save()
+}
+
+userSchema.methods.isRegistered = function(event_id){
+	return registered = this.registeredEvents.some(function (event) {
+    	return event.equals(event_id);
+	});
 }
 
 module.exports = mongoose.model('User', userSchema);
