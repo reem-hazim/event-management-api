@@ -30,7 +30,7 @@ const eventSchema = new Schema({
 })
 
 eventSchema.methods.populateEvent = async function(){
+	await this.populate({path: 'registeredUsers', select: ['firstName', 'lastName', 'email']})
 	return await this.populate({path: 'creator', select: ['firstName', 'lastName', 'email']})
-					.populate({path: 'registeredUsers', select: ['firstName', 'lastName', 'email']})
 }
 module.exports = mongoose.model('Event', eventSchema);

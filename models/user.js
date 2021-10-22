@@ -26,7 +26,7 @@ const userSchema = new Schema({
 		type: Date,
 		required: true,
 	},
-	picture: imageSchema,
+	image: imageSchema,
 	token: {
 		type: String,
 	},
@@ -56,7 +56,8 @@ userSchema.pre('save', async function(next){
 	next();
 })
 
-userSchema.methods.createToken = function(token_key){
+userSchema.methods.createToken = function(){
+	token_key = process.env.token_key || "hello123"
 	const token = jwt.sign(
         { user_id: this._id, email:this.email },
         token_key,
@@ -72,10 +73,11 @@ userSchema.methods.isRegistered = function(event_id){
 	});
 }
 
-userSchema.methods.prettyPrint = async function(){
+userSchema.methods.populateUser = async function(){
 	await this.populate({path: 'registeredEvents', select: 'name'})
-	const {email, firstName, lastName, dob, token, registeredEvents} = this
-	return {email, firstName, lastName, dob, token, registeredEvents, image: this.image.url}
+	const {firstName, lastName, dob, email, _id, registeredEvents, token} = this
+	return {_id, firstName, lastName, dob, email, registeredEvents, image:this.image.url, _id, token} 
+
 }
 
 module.exports = mongoose.model('User', userSchema);

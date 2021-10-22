@@ -15,13 +15,15 @@ const wrapAsync = require('./utils/wrapAsync');
 
 // Require routes
 const eventRoutes = require('./routes/event');
-const userRoutes = require('./routes/userAuth');
+const userRoutes = require('./routes/user');
 
 const dbUrl = process.env.DB_URL || 'mongodb://localhost:27017/eventAPI'
 
 mongoose.connect(dbUrl, {
 	useNewUrlParser: true,
 });
+
+
 const db = mongoose.connection;
 db.on("error", console.log.bind(console, "connection error"));
 db.once("open", ()=>{

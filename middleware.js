@@ -11,11 +11,11 @@ module.exports.verifyToken = wrapAsync(async (req, res, next) => {
 
   if (!token) 
   	throw new AppError("A token is required for authentication", 400, "Token required")
+  	token_key = process.env.TOKEN_KEY || "hello123"
+		const decoded = jwt.verify(token, token_key);
 
-		const decoded = jwt.verify(token, process.env.TOKEN_KEY);
-		req.user = decoded;
-
-  const user = await User.findById(req.user.user_id)
+  const user = await User.findById(decoded.user_id)
+  req.user = user
 
   if (user.token !== token)
   	throw new AppError("Your token is expired. Please log in again.", 400, "Token expired")
@@ -23,17 +23,24 @@ module.exports.verifyToken = wrapAsync(async (req, res, next) => {
 
 });
 
-module.exports.isCreator = async (req, res, next)=>{
-	const user_id = req.user.user_id
+module.exports.isCreator = wrapAsync(async (req, res, next)=>{
+	const user_id = req.user._id
 	const event = await Event.findById(req.params.id)
 	if(!event)
 		throw new AppError("This event does not exist", 400, "Invalid event")
 
 	if(!event.creator.equals(user_id))
-		throw new AppError("You are not authorized to edit this event.", 400,"No authorization")
+		throw new AppError("You are not authorized to edit this event.", 400,"Authorization Error.")
 
 	return next()
-}
+})
+
+module.exports.isUser = wrapAsync(async (req, res, next)=>{
+	const {id} = req.params
+	if (!req.user._id.equals(id))
+		throw new AppError("You are not authorized to view this user's account.", 400, "Authorization Error.")
+	return next()
+})
 
 module.exports.validateNewEvent = (req, res, next)=>{
 	const {error} = eventNewSchema.validate(req.body)
