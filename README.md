@@ -7,13 +7,13 @@ All request bodies must be form-encoded, except for the `/register` route, which
 All endpoints return a json object.
 
 <br/>
-##Authentication
+## Authentication
 Authentication is supported using JSON web tokens.
 
 When the user creates an account using the `/register` endpoints, they must set an email and a password. These credentials can then be used to log in to an account through the `login` endpoint. The `login` endpoint will return a json object containing a JSON web token (`token`). **This token must be added to the header under the `x-access-token` key for all endpoints that require authorization and/or authentication.** In the endpoint documentation below, it is indicated whether an endpoint requires an authentication token or not.
 
 <br/>
-##Errors
+## Errors
 All errors return a json object with the following properties:
 
 **name** (string): The name of the error
@@ -22,7 +22,7 @@ All errors return a json object with the following properties:
 
 <br/>
 
-##Return Objects
+## Return Objects
 
 ### The User Object
 An object containing information about a specific user
@@ -120,7 +120,7 @@ _**Returns**_:
 A `User` object for the logged-in user. The object contains a token that must be copied into the header for all endpoints that require authentication.
 
 <br/>
-###`POST` /logout
+### `POST` /logout
 
 _Token required_
 
@@ -135,7 +135,7 @@ _**Return format**_:
 <br/>
 ##Event Endpoints
 
-###`GET` /events
+### `GET` /events
 
 _Token not required_
 
@@ -167,7 +167,7 @@ An `Event` object of the newly created event.
 
 <br/>
 
-###`GET` /events/<**id**>
+### `GET` /events/<**id**>
 
 _Token not required_
 
